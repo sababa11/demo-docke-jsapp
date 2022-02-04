@@ -13,6 +13,12 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=password
     volumes:
       - mongo-data:/data/db
+  mongodb-exporter:
+    image: docker.io/bitnami/mongodb-exporter:0
+    ports:
+      - 9216:9216
+    command:
+      - --mongodb.uri=mongodb://admin:password@mongodb
   mongo-express:
     image: mongo-express
     restart: always # fixes MongoNetworkError when mongodb is not ready when mongo-express starts
@@ -31,13 +37,15 @@ services:
     - --config.file=/etc/prometheus/prometheus.yml
     volumes:
     - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    - ./rules.yml:/etc/prometheus/rules.yml
+    - prom-data:/prometheus
     depends_on:
     - cadvisor
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
-    ports:
-    - 8082:8080
+    expose:
+    - 8080
     volumes:
     - /:/rootfs:ro
     - /var/run:/var/run:rw
@@ -47,4 +55,6 @@ services:
     - my-app
 volumes:
   mongo-data:
+    driver: local
+  prom-data:
     driver: local
